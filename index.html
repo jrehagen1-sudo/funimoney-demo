@@ -378,7 +378,7 @@ function check(g){ if (g !== gid) throw new Abort(); }
 const startOf = p => p.pieces && p.cur === 1 ? 20 : 0;          // each piece laps at its own start
 const sync = p => { if (p.pieces) p.pieces[p.cur] = p.pos; };      // write the piece in play back
 const piecesOf = p => p.pieces ? p.pieces.map((q, k) => k === p.cur ? p.pos : q) : [p.pos];
-function where(pos){ return pos.path === 'L' ? SQ[pos.i].nm : SHORT[pos.path][Math.max(0, pos.i)].n + ' (shortcut)'; }
+function where(pos){ return pos.path === 'L' ? SQ[pos.i].n : SHORT[pos.path][Math.max(0, pos.i)].n + ' (shortcut)'; }
 
 /* =================== BOT =================== */
 function scoreSquare(p, i){
