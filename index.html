@@ -53,6 +53,7 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .pcs{position:absolute;right:.3cqw;bottom:.3cqw;display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:.2cqw;max-width:80%}
 .piece{width:2.6cqw;height:2.6cqw;border-radius:50%;border:.3cqw solid #fff;box-shadow:0 .2cqw .5cqw rgba(0,0,0,.35);display:grid;place-items:center;color:#fff;font:800 1.2cqw/1 var(--f-body)}
 .piece.now{outline:.3cqw solid var(--ink);outline-offset:.15cqw}
+.piece.duo{font-size:.9cqw;letter-spacing:-.03em}
 .cell.hi{box-shadow:inset 0 0 0 .35cqw var(--gold)}
 
 .overlay{position:absolute;inset:0;pointer-events:none;z-index:1}
@@ -105,6 +106,9 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .btn{border:2px solid var(--ink);background:var(--ink);color:var(--paper);border-radius:6px;padding:9px 14px;font-weight:700;font-size:15px}
 .btn.alt{background:var(--paper);color:var(--ink)}
 .btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:default;transform:none}
+.btn.picked{opacity:1;outline:3px solid var(--gold);outline-offset:2px}
+.botTag{font:600 11px/1 var(--f-mono);letter-spacing:.06em;background:var(--muted);color:#fff;padding:4px 6px;border-radius:3px}
 .dot{width:14px;height:14px;border-radius:50%;flex:none;border:2px solid #fff;box-shadow:0 0 0 1px var(--ink)}
 
 .players{display:flex;flex-direction:column;gap:10px}
@@ -157,7 +161,7 @@ details.setup[open] summary::after{content:" –"}
 <header class="top">
   <div>
     <h1>Funi<em>mo</em><span>ney</span></h1>
-    <p>Playable demo of the board game for 2–4 players taking turns on one screen. Divided Berlin, about 1948–53: pay by coin value in the West, by coin count in the East.</p>
+    <p>Playable demo of the board game for 2–4 players taking turns on one screen, or you against a bot. Divided Berlin, about 1948–53: pay by coin value in the West, by coin count in the East.</p>
   </div>
   <span class="draft">Demo · built from design-doc drafts, Nov 18</span>
 </header>
@@ -203,6 +207,8 @@ details.setup[open] summary::after{content:" –"}
       <details class="setup" id="setup">
         <summary>New game</summary>
         <form class="form" id="setupForm">
+          <label for="mode">Mode
+            <select id="mode"><option value="pass" selected>Pass and play: 2–4 players</option><option value="bot">You vs. bot: 2 pieces each</option></select></label>
           <label for="nPlayers">Players
             <select id="nPlayers"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select></label>
           <div class="names">
@@ -226,6 +232,7 @@ details.setup[open] summary::after{content:" –"}
         <li>At Checkpoint Charlie and Brandenburg Gate you may re-order your stack. New coins go on top.</li>
         <li>Shortcuts (gold edge at Potsdamer Platz and Friedrichstrasse): 1 die, every square is a risk, and you stop where you rejoin.</li>
         <li>Gold: buy at START for 10, never taken from you, cashed in automatically to keep you from going out.</li>
+        <li><b>You vs. bot:</b> each side has two pieces, one starting on Zoo Station and one on Pankow Villa, sharing one coin stack. Roll first, then pick which piece moves. A lap counts when either piece passes its own start.</li>
         <li>The cards are placeholders until the Card Writer bot drafts the real decks.</li>
       </ul>
     </section>
@@ -324,6 +331,7 @@ const DECK_NAME = {W:'West card', E:'East card', I:'Inflation card'};
 let S = null;            // game state (plain JSON)
 let gid = 0;             // bumps on new game; stale async flows stop
 let pickMode = false, resolver = null;
+let BOT_THINK_MS = 750, BOT_PICK_MS = 450;   // bot pauses, so a person can follow its turn
 const $ = s => document.querySelector(s);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const rnd = n => 1 + Math.floor(Math.random() * n);
@@ -332,9 +340,15 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const sum = a => a.reduce((x, y) => x + y, 0);
 class Abort extends Error {}
 
-function newState(names, laps){
+function newState(names, laps, duo){
   return {
-    players: names.map((n, i) => ({id:i, name:n, color:COLORS[i], stack:[5,2,2,1,1,1], gold:0, laps:0, pos:{path:'L', i:0}, out:false})),
+    players: names.map((n, i) => {
+      const p = {id:i, name:n, color:COLORS[i], stack:[5,2,2,1,1,1], gold:0, laps:0, pos:{path:'L', i:0}, out:false};
+      // You vs. bot: two pieces per player, on opposite starts, sharing one stack. p.pos is the piece in play.
+      if (duo) { p.pieces = [p.pos, {path:'L', i:20}]; p.cur = 0; p.bot = i === 1; }
+      return p;
+    }),
+    duo:!!duo,
     owners:{}, flags:{}, pot:[], bankGold:8, target:laps, turn:0, ending:false, over:false,
     inflation:null, decks:{W:shuffle([...CARDS.W.keys()]), E:shuffle([...CARDS.E.keys()]), I:shuffle([...CARDS.I.keys()])},
     log:[], card:null
@@ -361,21 +375,68 @@ function addCoins(p, coins){
   if (p.stack.length > 20) { const extra = p.stack.length - 20; p.stack.length = 20; log(`${p.name}'s holder is full: ${extra} coin${extra>1?'s':''} go back to the bank.`); }
 }
 function check(g){ if (g !== gid) throw new Abort(); }
+const startOf = p => p.pieces && p.cur === 1 ? 20 : 0;          // each piece laps at its own start
+const sync = p => { if (p.pieces) p.pieces[p.cur] = p.pos; };      // write the piece in play back
+const piecesOf = p => p.pieces ? p.pieces.map((q, k) => k === p.cur ? p.pos : q) : [p.pos];
+function where(pos){ return pos.path === 'L' ? SQ[pos.i].nm : SHORT[pos.path][Math.max(0, pos.i)].n + ' (shortcut)'; }
+
+/* =================== BOT =================== */
+function scoreSquare(p, i){
+  const sq = SQ[i];
+  if (sq.t === 'P') return S.owners[i] === undefined ? 2 : S.owners[i] === p.id ? 0 : -1.5;
+  if (sq.t === 'C') return sq.deck === 'W' ? .3 : sq.deck === 'E' ? .1 : -.5;
+  if (sq.t === 'X') return -2;
+  if (sq.t === 'pot') return S.pot.length;
+  if (sq.t === 'T') return S.flags[i] === undefined ? 2 : S.flags[i] === p.id ? 0 : -.3;
+  if (sq.t === 'B') return sq.fx === 'send' ? 1 : -1;
+  if (sq.t === 'L') return ({gain1:1, gain2:2, pay1:-1, care:1, parcel:1})[sq.fx] || 0;
+  return 0;
+}
+// Pick the piece whose move lands best: free property or flags, the Pot, passing its own start; avoid rent and cronies.
+function botPiece(p, dice){
+  let best = 0, top = -Infinity;
+  p.pieces.forEach((pos, k) => {
+    const start = k === 1 ? 20 : 0;
+    let score;
+    if (pos.path !== 'L') {
+      const out = dice[0] - (3 - pos.i) > 0;
+      const laps = (pos.path === 'W' && start === 0) || (pos.path === 'E' && start === 20);
+      score = out ? scoreSquare(p, REJOIN[pos.path]) + (laps ? 3 : 0) : (pos.path === 'W' ? -2 : 0);
+    } else {
+      const n = sum(dice), to = (pos.i + n) % 40, dist = (start - pos.i + 40) % 40 || 40;
+      score = scoreSquare(p, to) + (dist <= n ? 3 : 0);
+    }
+    score += Math.random() * .2;
+    if (score > top) { top = score; best = k; }
+  });
+  return best;
+}
 
 /* =================== UI: prompt & dice =================== */
 function choose(text, options, opts = {}){
   const g = gid;
   return new Promise((res, rej) => {
     const p = cur();
-    $('#who').innerHTML = `<span class="dot" style="background:${p.color}"></span>${esc(p.name)}`;
+    $('#who').innerHTML = `<span class="dot" style="background:${p.color}"></span>${esc(p.name)}${p.bot ? ' <span class="botTag">bot</span>' : ''}`;
     $('#msg').textContent = text;
     const box = $('#opts'); box.innerHTML = '';
     options.forEach((o, k) => {
       const b = document.createElement('button');
       b.className = 'btn' + (o.alt ? ' alt' : ''); b.type = 'button'; b.id = 'opt' + k; b.textContent = o.label;
+      if (p.bot) b.disabled = true;
       b.onclick = () => { if (g !== gid) return rej(new Abort()); pickMode = false; resolver = null; renderPlayers(); res(o.v); };
       box.appendChild(b);
     });
+    if (p.bot) {
+      const want = typeof opts.bot === 'function' ? opts.bot() : ('bot' in opts ? opts.bot : options[0].v);
+      const k = Math.max(0, options.findIndex(o => o.v === want));
+      setTimeout(() => {
+        if (g !== gid) return rej(new Abort());
+        box.querySelectorAll('button').forEach((b, j) => b.classList.toggle('picked', j === k));
+        setTimeout(() => g !== gid ? rej(new Abort()) : res(options[k].v), BOT_PICK_MS);
+      }, BOT_THINK_MS);
+      return;
+    }
     if (opts.pick) { pickMode = true; resolver = () => {}; renderPlayers(); }
     box.querySelector('button')?.focus({preventScroll:true});
   });
@@ -424,7 +485,7 @@ function buildBoard(){
     add(side + k, r, c, 'short ' + side, side + (k + 1) + ' · Shortcut', s.n, s.n + ': ' + s.d);
   });
 }
-function cellId(pos){ return pos.path === 'L' ? 'L' + pos.i : pos.path + pos.i; }
+function cellId(pos){ return pos.path === 'L' ? 'L' + pos.i : pos.i < 0 ? 'L' + FORK[pos.path] : pos.path + pos.i; }
 
 function renderBoard(){
   document.querySelectorAll('.cell').forEach(c => { c.querySelector('.pcs').innerHTML = ''; c.querySelector('.dyn').innerHTML = ''; c.classList.remove('hi'); });
@@ -432,9 +493,13 @@ function renderBoard(){
   for (const [i, id] of Object.entries(S.flags)) { const p = S.players[id]; $('#L' + i).querySelector('.dyn').innerHTML = `<span class="flag" style="color:${p.color}" title="${esc(p.name)}'s flag">⚑</span>`; }
   for (const p of S.players) {
     if (p.out) continue;
-    const cell = document.getElementById(cellId(p.pos));
-    cell.querySelector('.pcs').insertAdjacentHTML('beforeend', `<span class="piece ${p.id === S.turn ? 'now' : ''}" style="background:${p.color}" title="${esc(p.name)}">${esc(p.name[0])}</span>`);
-    if (p.id === S.turn) cell.classList.add('hi');
+    piecesOf(p).forEach((pos, k) => {
+      const cell = document.getElementById(cellId(pos));
+      const now = p.id === S.turn && (!p.pieces || k === p.cur);
+      const label = esc(p.name[0]) + (p.pieces ? k + 1 : '');
+      cell.querySelector('.pcs').insertAdjacentHTML('beforeend', `<span class="piece ${now ? 'now' : ''} ${p.pieces ? 'duo' : ''}" style="background:${p.color}" title="${esc(p.name)}${p.pieces ? ' · piece ' + (k + 1) : ''}">${label}</span>`);
+      if (now) cell.classList.add('hi');
+    });
   }
   $('#potInfo').textContent = S.pot.length ? `${S.pot.length} coin${S.pot.length>1?'s':''} · value ${sum(S.pot)}` : 'empty';
   for (const d of ['W','E','I']) $('#cnt' + d).textContent = S.decks[d].length + ' left';
@@ -453,11 +518,11 @@ function renderPlayers(){
       ? `<button type="button" class="coin v${v}" data-p="${p.id}" data-k="${k}" title="Coin worth ${v}" ${pickMode && p.id === S.turn ? '' : 'tabindex="-1"'}>${v}</button>`
       : `<button type="button" class="coin v${v}" data-p="${p.id}" data-k="${k}" title="Face side: counts as 1 token (printed ${v})" ${pickMode && p.id === S.turn ? '' : 'tabindex="-1"'}>${FACE}<small>${v}</small></button>`).join('');
     return `<div class="pl ${p.id === S.turn && !S.over ? 'now' : ''} ${p.out ? 'out' : ''}">
-      <div class="plh"><span class="dot" style="background:${p.color}"></span><strong>${esc(p.name)}</strong>
+      <div class="plh"><span class="dot" style="background:${p.color}"></span><strong>${esc(p.name)}</strong>${p.bot ? ' <span class="botTag">bot</span>' : ''}
         ${p.out ? '<span class="half" style="background:#596267">Out</span>' : `<span class="half ${h}">${h === 'W' ? 'West · pays by value' : 'East · pays by count'}</span>`}</div>
       <div class="stats"><span>Laps <b>${p.laps}/${S.target}</b></span><span>Coins <b>${p.stack.length}</b> · value <b>${sum(p.stack)}</b></span>
         <span>Gold <b>${p.gold}</b> ${p.gold ? `<span class="bars">${'<i class="bar"></i>'.repeat(p.gold)}</span>` : ''}</span>
-        <span>Property <b>${Object.values(S.owners).filter(x => x === p.id).length}</b></span><span>Flags <b>${flagsOf(p)}</b></span></div>
+        <span>Property <b>${Object.values(S.owners).filter(x => x === p.id).length}</b></span><span>Flags <b>${flagsOf(p)}</b></span>${p.pieces && !p.out ? `<span>Pieces <b>1</b> ${esc(where(piecesOf(p)[0]))} · <b>2</b> ${esc(where(piecesOf(p)[1]))}</span>` : ''}</div>
       <div class="stack ${pickMode && p.id === S.turn ? 'pick' : ''} ${flip ? 'flip' : ''}"><span class="lbl">TOP ›</span>${coins || '<span class="lbl">empty</span>'}</div>
     </div>`;
   }).join('');
@@ -561,7 +626,7 @@ async function passStart(p){
   p.laps++;
   const f = flagsOf(p);
   addCoins(p, fewest(2 + f));
-  log(`${p.name} passes START: lap ${p.laps}, collects ${2 + f}${f ? ` (2 + ${f} for flags)` : ''}.`, true);
+  log(`${p.name} passes ${startOf(p) === 20 ? 'Pankow Villa, piece 2’s start' : 'START'}: lap ${p.laps}, collects ${2 + f}${f ? ` (2 + ${f} for flags)` : ''}.`, true);
   if (p.laps >= S.target && !S.ending) { S.ending = true; log(`${p.name} reached ${S.target} laps! The game ends when this round finishes.`, true); }
   render();
   const cost = 10 * mult();
@@ -571,7 +636,8 @@ async function passStart(p){
     if (p.gold > 0) opts.push({label:'Cash in a gold bar', v:'cash', alt:true});
     if (!opts.length) break;
     opts.push({label:'Keep going', v:'go', alt:true});
-    const v = await choose(`START: gold is real money and can never be taken from you. You hold ${p.gold}.`, opts); check(g);
+    const v = await choose(`START: gold is real money and can never be taken from you. You hold ${p.gold}.`, opts,
+      {bot:() => opts.some(o => o.v === 'buy') && sum(p.stack) >= cost + 8 ? 'buy' : 'go'}); check(g);
     if (v === 'buy') { await pay(p, 10, 'bank', 'a gold bar'); p.gold++; S.bankGold--; log(`${p.name} buys a gold bar.`); render(); }
     else if (v === 'cash') { cashIn(p); render(); }
     else break;
@@ -580,8 +646,11 @@ async function passStart(p){
 async function crossing(p){
   const g = gid;
   const into = half(p) === 'E' ? 'the East: every coin now counts as 1' : 'the West: coins count at printed value';
+  if (p.bot) p.stack.sort((a, b) => a - b);
   render();
-  await choose(`You crossed into ${into}. Tap coins in your stack to move them to the top, then continue.`, [{label:'Done re-ordering', v:1}], {pick:true}); check(g);
+  if (p.bot) await choose(`${p.name} crossed into ${into}. It puts its smallest coins on top.`, [{label:'Continue', v:1}]);
+  else await choose(`You crossed into ${into}. Tap coins in your stack to move them to the top, then continue.`, [{label:'Done re-ordering', v:1}], {pick:true});
+  check(g);
   log(`${p.name} crosses at ${SQ[p.pos.i].n} and sets the stack order.`);
 }
 
@@ -590,13 +659,13 @@ async function moveLoop(p, steps){
   for (let s = 0; s < steps; s++) {
     p.pos.i = (p.pos.i + 1) % 40; await step(p); check(g);
     const i = p.pos.i, left = steps - s - 1;
-    if (i === 0) await passStart(p);
+    if (i === startOf(p)) await passStart(p);
     if (p.out) return 'out';
     if (i === 10 || i === 30) await crossing(p);
     const forkSide = SQ[i].fork;
     if (forkSide && left > 0) {
       const v = await choose(`You reached the ${forkSide === 'W' ? 'capitalist (West)' : 'socialist (East)'} shortcut at ${SQ[i].n}. Turn in and spend your last ${left} step${left>1?'s':''} there?`,
-        [{label:'Take the shortcut', v:true}, {label:'Stay on the loop', v:false, alt:true}]); check(g);
+        [{label:'Take the shortcut', v:true}, {label:'Stay on the loop', v:false, alt:true}], {bot:false}); check(g);
       if (v) { log(`${p.name} turns into the ${forkSide === 'W' ? 'West' : 'East'} shortcut.`); p.pos = {path:forkSide, i:-1}; return moveShort(p, left); }
     }
   }
@@ -608,7 +677,7 @@ async function moveShort(p, steps){
     if (p.pos.i >= 3) {
       p.pos = {path:'L', i:REJOIN[side]}; await step(p); check(g);
       log(`${p.name} leaves the shortcut at ${SQ[REJOIN[side]].n}; the move ends there.`);
-      if (side === 'W') await passStart(p);
+      if (side === (startOf(p) === 20 ? 'E' : 'W')) await passStart(p);
       return 'land';
     }
     p.pos.i++; await step(p); check(g);
@@ -650,7 +719,8 @@ async function landLoop(p){
     if (o === undefined) {
       const cost = 2 * mult();
       const v = await choose(`${sq.n} is free. Claim it for ${cost}${half(p) === 'E' ? ' tokens' : ''}? Anyone who lands here later pays you 1.`,
-        [{label:`Claim for ${cost}`, v:true}, {label:'No thanks', v:false, alt:true}]); check(g);
+        [{label:`Claim for ${cost}`, v:true}, {label:'No thanks', v:false, alt:true}],
+        {bot:() => (half(p) === 'E' ? p.stack.length : sum(p.stack)) >= cost + 4}); check(g);
       if (v) { await pay(p, 2, 'bank', sq.n); if (!p.out) { S.owners[i] = p.id; log(`${p.name} claims ${sq.n}.`); } }
     } else if (o !== p.id) {
       log(`${sq.n} belongs to ${S.players[o].name}.`);
@@ -669,7 +739,7 @@ async function landLoop(p){
     else if (o !== p.id) {
       const holder = S.players[o];
       const v = await choose(`${holder.name}'s flag flies at ${sq.n}. Challenge it? You both roll one die; higher wins, ties go to ${holder.name}. The loser pays the winner 1.`,
-        [{label:'Challenge', v:true}, {label:'Leave it', v:false, alt:true}]); check(g);
+        [{label:'Challenge', v:true}, {label:'Leave it', v:false, alt:true}], {bot:() => p.stack.length >= 6}); check(g);
       if (v) {
         const [a] = await roll(1, `${p.name} attacks`); check(g);
         const [b] = await roll(1, `${holder.name} defends`); check(g);
@@ -683,11 +753,12 @@ async function landLoop(p){
     else {
       const others = active().filter(o => o !== p);
       if (others.length) {
-        const id = await choose(`${sq.n}: send another player back 3 squares.`, others.map(o => ({label:o.name, v:o.id}))); check(g);
+        const id = await choose(`${sq.n}: send another player back 3 squares${S.duo ? ' (the piece they moved last)' : ''}.`, others.map(o => ({label:o.name, v:o.id}))); check(g);
         const t = S.players[id];
         if (t.pos.path === 'L') t.pos.i = (t.pos.i + 37) % 40;
         else if (t.pos.i >= 3) t.pos.i -= 3; else t.pos = {path:'L', i:FORK[t.pos.path]};
-        log(`${p.name} sends ${t.name} back 3 squares.`);
+        sync(t);
+        log(`${p.name} sends ${t.name}${t.pieces ? ' piece ' + (t.cur + 1) : ''} back 3 squares.`);
       }
     }
   }
@@ -743,22 +814,25 @@ async function playTurn(){
   if (S.inflation && S.inflation.by === p.id) { S.inflation = null; log(`Inflation ends as ${p.name}'s turn begins.`); }
   snap();
   render();
-  let onShort = p.pos.path !== 'L';
-  if (!onShort && SQ[p.pos.i].fork) {
-    const side = SQ[p.pos.i].fork;
-    const v = await choose(`You stand at the ${side === 'W' ? 'capitalist (West)' : 'socialist (East)'} shortcut. Turn in and roll 1 die, or stay on the loop and roll 2?`,
-      [{label:'Take the shortcut', v:true}, {label:'Stay on the loop', v:false, alt:true}]); check(g);
-    if (v) { p.pos = {path:side, i:-1}; onShort = true; log(`${p.name} turns into the ${side === 'W' ? 'West' : 'East'} shortcut.`); }
-  }
-  await choose(onShort ? `You're on a shortcut: roll 1 die.` : `Your turn. Roll 2 dice.`, [{label: onShort ? 'Roll 1 die' : 'Roll the dice', v:1}]); check(g);
-  const dice = await roll(onShort ? 1 : 2, `${p.name} moves`); check(g);
-  const n = sum(dice);
-  log(`${p.name} rolls ${dice.join(' + ')}${dice.length > 1 ? ' = ' + n : ''}.`);
-  say(`Moving ${n}…`);
-  const r = onShort ? await moveShort(p, n) : await moveLoop(p, n);
-  check(g);
-  if (r === 'land' && !p.out) {
-    if (p.pos.path === 'L') await landLoop(p); else await landShort(p);
+  if (S.duo) await duoMove(p);
+  else {
+    let onShort = p.pos.path !== 'L';
+    if (!onShort && SQ[p.pos.i].fork) {
+      const side = SQ[p.pos.i].fork;
+      const v = await choose(`You stand at the ${side === 'W' ? 'capitalist (West)' : 'socialist (East)'} shortcut. Turn in and roll 1 die, or stay on the loop and roll 2?`,
+        [{label:'Take the shortcut', v:true}, {label:'Stay on the loop', v:false, alt:true}]); check(g);
+      if (v) { p.pos = {path:side, i:-1}; onShort = true; log(`${p.name} turns into the ${side === 'W' ? 'West' : 'East'} shortcut.`); }
+    }
+    await choose(onShort ? `You're on a shortcut: roll 1 die.` : `Your turn. Roll 2 dice.`, [{label: onShort ? 'Roll 1 die' : 'Roll the dice', v:1}]); check(g);
+    const dice = await roll(onShort ? 1 : 2, `${p.name} moves`); check(g);
+    const n = sum(dice);
+    log(`${p.name} rolls ${dice.join(' + ')}${dice.length > 1 ? ' = ' + n : ''}.`);
+    say(`Moving ${n}…`);
+    const r = onShort ? await moveShort(p, n) : await moveLoop(p, n);
+    check(g);
+    if (r === 'land' && !p.out) {
+      if (p.pos.path === 'L') await landLoop(p); else await landShort(p);
+    }
   }
   check(g);
   render();
@@ -770,6 +844,34 @@ async function playTurn(){
   S.turn = nxt.id;
 }
 
+// You vs. bot: roll 2 dice, then pick which of your two pieces moves. A piece on a shortcut uses only the first die.
+async function duoMove(p){
+  const g = gid;
+  await choose(p.bot ? `${p.name}'s turn.` : `Your turn. Roll 2 dice, then pick which piece to move.`, [{label:'Roll the dice', v:1}]); check(g);
+  const dice = await roll(2, `${p.name} rolls`); check(g);
+  log(`${p.name} rolls ${dice.join(' + ')} = ${sum(dice)}.`);
+  const k = await choose(`Rolled ${dice[0]} and ${dice[1]}. Which piece moves? A piece on a shortcut moves only the first die.`,
+    p.pieces.map((pos, j) => ({label:`Piece ${j + 1}: ${pos.path === 'L' ? sum(dice) : dice[0]} from ${where(pos)}`, v:j, alt:j === 1})),
+    {bot:() => botPiece(p, dice)}); check(g);
+  p.cur = k; p.pos = p.pieces[k]; render();
+  let onShort = p.pos.path !== 'L';
+  if (!onShort && SQ[p.pos.i].fork) {
+    const side = SQ[p.pos.i].fork;
+    const v = await choose(`Piece ${k + 1} stands at the ${side === 'W' ? 'capitalist (West)' : 'socialist (East)'} shortcut. Turn in and move ${dice[0]} (first die only), or stay on the loop and move ${sum(dice)}?`,
+      [{label:'Take the shortcut', v:true}, {label:'Stay on the loop', v:false, alt:true}], {bot:false}); check(g);
+    if (v) { p.pos = {path:side, i:-1}; onShort = true; log(`${p.name} turns piece ${k + 1} into the ${side === 'W' ? 'West' : 'East'} shortcut.`); }
+  }
+  const n = onShort ? dice[0] : sum(dice);
+  log(`${p.name} moves piece ${k + 1} ${n} square${n > 1 ? 's' : ''}.`);
+  say(`Moving piece ${k + 1}: ${n}…`);
+  const r = onShort ? await moveShort(p, n) : await moveLoop(p, n);
+  check(g);
+  if (r === 'land' && !p.out) {
+    if (p.pos.path === 'L') await landLoop(p); else await landShort(p);
+  }
+  sync(p);
+}
+
 async function loop(){
   const g = gid;
   try { while (!S.over && g === gid) await playTurn(); }
@@ -778,23 +880,35 @@ async function loop(){
 
 function startGame(state){
   gid++;
-  const n = +$('#nPlayers').value;
-  const names = [...Array(n)].map((_, k) => ($('#n' + k).value.trim() || 'Player ' + (k + 1)).slice(0, 12));
-  S = state || newState(names, +$('#laps').value);
+  const duo = $('#mode').value === 'bot';
+  const n = duo ? 1 : +$('#nPlayers').value;
+  const names = [...Array(n)].map((_, k) => ($('#n' + k).value.trim() || (duo ? 'You' : 'Player ' + (k + 1))).slice(0, 12));
+  if (duo) names.push(names[0].toLowerCase() === 'bot' ? 'Robot' : 'Bot');
+  S = state || newState(names, +$('#laps').value, duo);
+  if (state) S.players.forEach(p => { if (p.pieces) p.pos = p.pieces[p.cur]; });   // re-link after a saved copy
   pickMode = false;
   Object.keys(lastHalf).forEach(k => delete lastHalf[k]);
   buildBoard();
   const c3 = $('#card3d'); c3.classList.add('still'); c3.classList.remove('up');
   $('#cardBack').className = 'side back none'; $('#cardBack').textContent = 'Cards flip here';
   $('#dice').innerHTML = dieHTML(1) + dieHTML(1); $('#diceCap').textContent = '';
-  if (!state) log(`New game: ${names.join(', ')}. Everyone starts at START with 6 coins (value 12). First to ${S.target} laps.`, true);
+  if (!state) log(S.duo
+    ? `New game: ${names[0]} against ${names[1]}. Each side has two pieces, one on Zoo Station and one on Pankow Villa, sharing 6 coins (value 12). First to ${S.target} laps.`
+    : `New game: ${names.join(', ')}. Everyone starts at START with 6 coins (value 12). First to ${S.target} laps.`, true);
   render();
   loop();
 }
 
 $('#setupForm').addEventListener('submit', e => { e.preventDefault(); $('#setup').open = false; startGame(); });
-$('#nPlayers').addEventListener('change', () => { const n = +$('#nPlayers').value; for (let k = 0; k < 4; k++) $('#n' + k).closest('label').style.display = k < n ? '' : 'none'; });
-$('#n3').closest('label').style.display = 'none';
+function updateForm(){
+  const bot = $('#mode').value === 'bot', n = +$('#nPlayers').value;
+  $('#nPlayers').closest('label').style.display = bot ? 'none' : '';
+  for (let k = 0; k < 4; k++) $('#n' + k).closest('label').style.display = (bot ? k < 1 : k < n) ? '' : 'none';
+  $('#n0').closest('label').firstChild.textContent = bot ? 'Your name' : 'Player 1';
+}
+$('#nPlayers').addEventListener('change', updateForm);
+$('#mode').addEventListener('change', updateForm);
+updateForm();
 
 window.claude?.hot?.snapshot?.(() => saved ? {state:saved} : {});
 const boot = data => startGame(data && data.state && !data.state.over ? data.state : null);
