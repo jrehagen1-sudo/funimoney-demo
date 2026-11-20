@@ -161,9 +161,9 @@ details.setup[open] summary::after{content:" –"}
 <header class="top">
   <div>
     <h1>Funi<em>mo</em><span>ney</span></h1>
-    <p>Playable demo of the board game for 2–4 players taking turns on one screen, or you against a bot. Divided Berlin, about 1948–53: pay by coin value in the West, by coin count in the East.</p>
+    <p>Playable demo of the board game for 2–4 players taking turns on one screen, or you against a bot. Quasi Land, a modern American city split in two: pay by coin value on the free-market West Side, by coin count on the co-op East Side.</p>
   </div>
-  <span class="draft">Demo · built from design-doc drafts, Nov 18</span>
+  <span class="draft">Demo · Quasi Land, rules of Nov 19</span>
 </header>
 
 <div class="wrap">
@@ -171,26 +171,26 @@ details.setup[open] summary::after{content:" –"}
     <div class="board" id="board">
       <svg class="overlay" viewBox="0 0 110 110" preserveAspectRatio="none" aria-hidden="true">
         <line x1="10" y1="100" x2="100" y2="10" stroke="#1b2023" stroke-width=".9" stroke-dasharray="2.4 1.4"/>
-        <text x="21" y="22" font-size="2.3" fill="#a3352a" text-anchor="middle" transform="rotate(-45 21 22)">SOVIET SECTOR</text>
-        <text x="89" y="90" font-size="2.3" fill="#2c5a87" text-anchor="middle" transform="rotate(-45 89 90)">WESTERN SECTORS</text>
+        <text x="21" y="22" font-size="2.3" fill="#a3352a" text-anchor="middle" transform="rotate(-45 21 22)">EAST SIDE</text>
+        <text x="89" y="90" font-size="2.3" fill="#2c5a87" text-anchor="middle" transform="rotate(-45 89 90)">WEST SIDE</text>
       </svg>
       <div class="center" id="center">
         <div class="crow">
-          <div class="pot"><b>Crony Pot</b><span id="potInfo">empty</span></div>
+          <div class="pot"><b>Slush Fund</b><span id="potInfo">empty</span></div>
           <div class="crow" style="gap:.6cqw"><span class="dicecap" id="diceCap"></span><div class="dice" id="dice"></div></div>
         </div>
         <div class="table">
           <div class="decks">
             <div class="deck"><div class="pile W">WEST</div><span id="cntW"></span></div>
             <div class="deck"><div class="pile E">EAST</div><span id="cntE"></span></div>
-            <div class="deck"><div class="pile I">INFL.</div><span id="cntI"></span></div>
+            <div class="deck"><div class="pile I">PRICE<br>HIKE</div><span id="cntI"></span></div>
           </div>
           <div class="slot"><div class="card3d still" id="card3d">
             <div class="side back none" id="cardBack">Cards flip here</div>
             <div class="side face" id="cardFace"></div>
           </div></div>
         </div>
-        <div class="infl off" id="infl">No inflation in effect</div>
+        <div class="infl off" id="infl">No Price Hike in effect</div>
       </div>
     </div>
   </div>
@@ -212,10 +212,10 @@ details.setup[open] summary::after{content:" –"}
           <label for="nPlayers">Players
             <select id="nPlayers"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select></label>
           <div class="names">
-            <label for="n0">Player 1<input id="n0" value="Anna" maxlength="12"></label>
-            <label for="n1">Player 2<input id="n1" value="Max" maxlength="12"></label>
-            <label for="n2">Player 3<input id="n2" value="Lena" maxlength="12"></label>
-            <label for="n3">Player 4<input id="n3" value="Karl" maxlength="12"></label>
+            <label for="n0">Player 1<input id="n0" value="Ava" maxlength="12"></label>
+            <label for="n1">Player 2<input id="n1" value="Jake" maxlength="12"></label>
+            <label for="n2">Player 3<input id="n2" value="Mia" maxlength="12"></label>
+            <label for="n3">Player 4<input id="n3" value="Leo" maxlength="12"></label>
           </div>
           <label for="laps">Game length
             <select id="laps"><option value="3" selected>Quick demo: 3 laps</option><option value="10">Full game: 10 laps</option></select></label>
@@ -226,13 +226,16 @@ details.setup[open] summary::after{content:" –"}
     <section class="box rules">
       <h2>Demo rules</h2>
       <ul>
-        <li>Roll 2 dice and move clockwise. Passing START (Zoo Station) is one lap and pays 2, plus 1 for each border flag you hold. Finish the laps without losing all your coins.</li>
-        <li><b>West half:</b> pay by printed value; the bank gives change. <b>East half:</b> every coin counts as 1, taken from the top of your stack.</li>
-        <li>Paying a player on the other half: they roll a die for each 1 owed and take that coin, counted from the top.</li>
-        <li>At Checkpoint Charlie and Brandenburg Gate you may re-order your stack. New coins go on top.</li>
-        <li>Shortcuts (gold edge at Potsdamer Platz and Friedrichstrasse): 1 die, every square is a risk, and you stop where you rejoin.</li>
+        <li>Everyone starts with 8 coins: five 1s, two 2s and a 5.</li>
+        <li>Roll 2 dice and move clockwise. Passing START (Union Station) is one lap and pays 2, plus 1 for each border flag you hold, plus 1 if you have the fewest laps (ties count). Finish the laps without losing all your coins.</li>
+        <li><b>West Side:</b> pay by printed value; the bank gives change. <b>East Side:</b> every coin counts as 1, taken from the top of your stack.</li>
+        <li>Paying a player on the other side: they roll a die for each 1 owed and take that coin, counted from the top.</li>
+        <li>At the Toll Bridge and Turnpike Gate you may re-order your stack. Then collect 1 if your top coin suits the side you enter: a 1 for the East, a 5 for the West. New coins go on top.</li>
+        <li>Speed Trap and DMV Line: move back 3, or pay 1 to stay. Block Watch and Repo Man send another player back 3, but not a player on a shortcut. Insider squares pay 1 to the Slush Fund.</li>
+        <li>Shortcuts (gold edge at Wall Street and the Solar Farm): 1 die, every square is a risk, and you stop where you rejoin. Land exactly on the fork to turn in next turn.</li>
+        <li>Price Hikes double West Side payments until the drawer's next turn. East Side tokens, coin grabs and gains never double.</li>
         <li>Gold: buy at START for 10, never taken from you, cashed in automatically to keep you from going out.</li>
-        <li><b>You vs. bot:</b> each side has two pieces, one starting on Zoo Station and one on Pankow Villa, sharing one coin stack. Roll first, then pick which piece moves. A lap counts when either piece passes its own start.</li>
+        <li><b>You vs. bot:</b> each side has two pieces, one starting on Union Station and one on the Lake House, sharing one coin stack. Roll first, then pick which piece moves. A lap counts when either piece passes its own start.</li>
         <li>The cards are placeholders until the Card Writer bot drafts the real decks.</li>
       </ul>
     </section>
@@ -243,89 +246,89 @@ details.setup[open] summary::after{content:" –"}
 <script>
 /* =================== DATA (from design doc Sections 3-4) =================== */
 const SQ = [
-  {n:'Zoo Station',t:'start',nm:'Zoo Station · START'},
-  {n:'Tempelhof Airfield',t:'P',nm:'Tempelhof'},
-  {n:'Marshall Plan Office',t:'C',deck:'W',nm:'Marshall Plan'},
-  {n:'Kurfürstendamm',t:'P',nm:'Ku’damm'},
-  {n:'Crony Contract',t:'X',amt:2,nm:'Crony Contract'},
-  {n:'RIAS Radio House',t:'P',nm:'RIAS Radio'},
-  {n:'CARE Package Drop',t:'L',fx:'care',nm:'CARE Drop'},
-  {n:'Inflation Notice',t:'C',deck:'I',nm:'Inflation Notice'},
-  {n:'Bernauer Strasse Border',t:'T',nm:'Bernauer Str.'},
-  {n:'Black Market Raid',t:'B',fx:'back',nm:'Black Mkt Raid'},
-  {n:'Checkpoint Charlie',t:'cross',nm:'Checkpoint Charlie'},
-  {n:'Stalinallee',t:'P',nm:'Stalinallee'},
-  {n:'Five-Year Plan Office',t:'C',deck:'E',nm:'5-Year Plan'},
-  {n:'Ration Card Day',t:'L',fx:'gain1',nm:'Ration Day'},
-  {n:'Party Perk',t:'X',amt:2,nm:'Party Perk'},
-  {n:'Friedrichstrasse',t:'P',fork:'E',nm:'Friedrichstr.'},
-  {n:'Volkspolizei Check',t:'B',fx:'back',nm:'VoPo Check'},
-  {n:'Treptow Border',t:'T',nm:'Treptow'},
-  {n:'Konsum Cooperative',t:'P',nm:'Konsum'},
-  {n:'Inflation Notice',t:'C',deck:'I',nm:'Inflation Notice'},
-  {n:'Pankow Party Villa',t:'pot',nm:'Pankow Villa · take the Pot'},
-  {n:'Humboldt University',t:'P',nm:'Humboldt U.'},
-  {n:'Five-Year Plan Office',t:'C',deck:'E',nm:'5-Year Plan'},
-  {n:'Volunteer Work Brigade',t:'L',fx:'pay1',nm:'Work Brigade'},
-  {n:'Friedrichshain Border',t:'T',nm:'Friedrichshain'},
-  {n:'Rotes Rathaus',t:'P',nm:'Rotes Rathaus'},
-  {n:'Stasi Report',t:'B',fx:'send',nm:'Stasi Report'},
-  {n:'Western Parcel',t:'L',fx:'parcel',nm:'Western Parcel'},
-  {n:'Opportunist’s Allotment',t:'X',amt:2,nm:'Allotment'},
-  {n:'Charité Hospital',t:'P',nm:'Charité'},
-  {n:'Brandenburg Gate',t:'cross',nm:'Brandenburg Gate'},
-  {n:'Schöneberg Town Hall',t:'P',nm:'Schöneberg'},
-  {n:'Marshall Plan Office',t:'C',deck:'W',nm:'Marshall Plan'},
-  {n:'Wage Day at Siemensstadt',t:'L',fx:'gain2',nm:'Wage Day'},
-  {n:'Kreuzberg Border',t:'T',nm:'Kreuzberg'},
-  {n:'Potsdamer Platz',t:'P',fork:'W',nm:'Potsdamer Pl.'},
-  {n:'Military Police Sweep',t:'B',fx:'send',nm:'MP Sweep'},
-  {n:'Crony Lobby',t:'X',amt:2,nm:'Crony Lobby'},
-  {n:'KaDeWe Department Store',t:'P',nm:'KaDeWe'},
-  {n:'Candy Bomber',t:'L',fx:'gain1',nm:'Candy Bomber'}
+  {n:'Union Station',t:'start',nm:'Union Station · START'},
+  {n:'Food Truck Park',t:'P',nm:'Food Truck Park'},
+  {n:'Venture Capital Office',t:'C',deck:'W',nm:'Venture Capital'},
+  {n:'Times Square',t:'P',nm:'Times Square'},
+  {n:'Lobbyist Lunch',t:'X',amt:1,nm:'Lobbyist Lunch'},
+  {n:'Silicon Valley Campus',t:'P',nm:'Silicon Valley'},
+  {n:'Free Sample Giveaway',t:'L',fx:'care',nm:'Free Samples'},
+  {n:'Price Hike Alert',t:'C',deck:'I',nm:'Price Hike'},
+  {n:'Railroad Tracks Border',t:'T',nm:'Railroad Tracks'},
+  {n:'Speed Trap',t:'B',fx:'back',nm:'Speed Trap'},
+  {n:'Toll Bridge',t:'cross',nm:'Toll Bridge'},
+  {n:'Public Library',t:'P',nm:'Public Library'},
+  {n:'Planning Commission',t:'C',deck:'E',nm:'Planning Comm.'},
+  {n:'Stimulus Check Day',t:'L',fx:'gain1',nm:'Stimulus Check'},
+  {n:'Insider Perk',t:'X',amt:1,nm:'Insider Perk'},
+  {n:'Community Solar Farm',t:'P',fork:'E',nm:'Solar Farm'},
+  {n:'DMV Line',t:'B',fx:'back',nm:'DMV Line'},
+  {n:'City Limits Border',t:'T',nm:'City Limits'},
+  {n:'Food Co-op',t:'P',nm:'Food Co-op'},
+  {n:'Price Hike Alert',t:'C',deck:'I',nm:'Price Hike'},
+  {n:'Commissioner’s Lake House',t:'pot',nm:'Lake House · take the Fund'},
+  {n:'State University',t:'P',nm:'State University'},
+  {n:'Planning Commission',t:'C',deck:'E',nm:'Planning Comm.'},
+  {n:'Community Service Day',t:'L',fx:'pay1',nm:'Service Day'},
+  {n:'River Bridge Border',t:'T',nm:'River Bridge'},
+  {n:'City Hall',t:'P',nm:'City Hall'},
+  {n:'Neighborhood Watch Report',t:'B',fx:'send',nm:'Block Watch'},
+  {n:'Mystery Package',t:'L',fx:'parcel',nm:'Mystery Package'},
+  {n:'Cushy Committee Seat',t:'X',amt:1,nm:'Committee Seat'},
+  {n:'Community Hospital',t:'P',nm:'Community Hospital'},
+  {n:'Turnpike Gate',t:'cross',nm:'Turnpike Gate'},
+  {n:'Hollywood Boulevard',t:'P',nm:'Hollywood Blvd'},
+  {n:'Venture Capital Office',t:'C',deck:'W',nm:'Venture Capital'},
+  {n:'Gig Economy Payday',t:'L',fx:'gain2',nm:'Gig Payday'},
+  {n:'Freeway Overpass Border',t:'T',nm:'Freeway Overpass'},
+  {n:'Wall Street',t:'P',fork:'W',nm:'Wall Street'},
+  {n:'Repo Man',t:'B',fx:'send',nm:'Repo Man'},
+  {n:'Golden Parachute Club',t:'X',amt:1,nm:'Golden Parachute'},
+  {n:'Las Vegas Strip',t:'P',nm:'Las Vegas Strip'},
+  {n:'Pickleball Tournament Prize',t:'L',fx:'gain1',nm:'Pickleball Prize'}
 ];
-const TYPE_LABEL = {start:'Corner',P:'Property',C:'Card',X:'Crony',L:'Life',T:'Border',B:'Bump',cross:'Crossing',pot:'Corner'};
+const TYPE_LABEL = {start:'Corner',P:'Property',C:'Card',X:'Insider',L:'Life',T:'Border',B:'Bump',cross:'Crossing',pot:'Corner'};
 const SHORT = {
-  W:[{n:'Tiergarten Black Market',d:'A dealer takes your top coin.'},
-     {n:'Currency Reform, June 1948',d:'Old money cut: pay 2 to the bank.'},
-     {n:'Blockade Shortages',d:'Pay 1 to each player on the East half.'},
-     {n:'Kreuzberg Rubble Landlord',d:'The player on your left rolls and takes that coin.'}],
-  E:[{n:'Queue at the HO Store',d:'Roll: 4–6 gain 1, 1–3 lose 1.'},
-     {n:'Trümmerfrauen Rubble Shift',d:'Roll: 5–6 gain 2, 1–4 lose 1.'},
-     {n:'Raised Work Norms, June 1953',d:'Roll: 1–2 back to Friedrichstr.'},
-     {n:'Ration Card Lottery',d:'Roll: 6 gain 3, 2–5 nothing, 1 lose 2.'}]
+  W:[{n:'Pawn Shop Alley',d:'A dealer takes your top coin.'},
+     {n:'Hidden Fees Row',d:'Surprise fees: pay 1 to the bank.'},
+     {n:'Supply Chain Crunch',d:'Pay 1 to each player on the East Side.'},
+     {n:'Slumlord Row',d:'Roll: on 4–6 the player on your left rolls again and takes that coin; on 1–3 the landlord is away.'}],
+  E:[{n:'Empty-Shelf Grocery Line',d:'Roll: 4–6 gain 1, 1–3 lose 1.'},
+     {n:'Volunteer Cleanup Crew',d:'Roll: 5–6 gain 2, 1–4 lose 1.'},
+     {n:'Quota Hike Strike',d:'Roll: 1–2 back to the Solar Farm.'},
+     {n:'State Lottery',d:'Roll: 6 gain 3, 2–5 nothing, 1 lose 2.'}]
 };
 const FORK = {W:35, E:15}, REJOIN = {W:5, E:25};
 const CARDS = {
   W:[
-    {h:'Marshall Plan Grant',p:'Aid dollars reach your workshop.',fx:{gain:2},t:'Collect 2.'},
-    {h:'Airlift Bonus',p:'You unloaded coal at Tempelhof all night.',fx:{gain:2},t:'Collect 2.'},
-    {h:'The New Mark Holds',p:'The currency reform pays off for savers.',fx:{gain:2},t:'Collect 2.'},
-    {h:'Shop Opens',p:'Your stall on the Ku’damm draws a crowd.',fx:{gain:2},t:'Collect 2.'},
-    {h:'Black-Market Fine',p:'Caught selling cigarettes at the Tiergarten.',fx:{pay:2},t:'Pay 2.'},
-    {h:'Rent Goes Up',p:'Your landlord in Charlottenburg raises the rent.',fx:{pay:2},t:'Pay 2.'},
-    {h:'Rubble Tax',p:'Every household pays toward clearing the streets.',fx:{pay:2},t:'Pay 2.'},
-    {h:'Prices Hold',p:'The free market is calm today.',fx:{},t:'Nothing happens.'},
-    {h:'RIAS News',p:'You listen to the evening broadcast.',fx:{},t:'Nothing happens.'},
-    {h:'Queue at the Bank',p:'You wait an hour and go home.',fx:{},t:'Nothing happens.'}],
+    {h:'Startup Funded',p:'A venture fund backs your app idea.',fx:{gain:2},t:'Collect 2.'},
+    {h:'Side Hustle Pays Off',p:'Weekend deliveries add up.',fx:{gain:2},t:'Collect 2.'},
+    {h:'Stock Market Rally',p:'Your index fund has a good week.',fx:{gain:2},t:'Collect 2.'},
+    {h:'Grand Opening',p:'Your food truck draws a line around the block.',fx:{gain:2},t:'Collect 2.'},
+    {h:'Surprise Medical Bill',p:'Out-of-network, of course.',fx:{pay:2},t:'Pay 2.'},
+    {h:'Rent Goes Up',p:'Your landlord raises the rent at renewal.',fx:{pay:2},t:'Pay 2.'},
+    {h:'Subscription Creep',p:'You forgot to cancel three free trials.',fx:{pay:2},t:'Pay 2.'},
+    {h:'Market Steady',p:'The free market is calm today.',fx:{},t:'Nothing happens.'},
+    {h:'Viral Video',p:'Lots of likes, no money.',fx:{},t:'Nothing happens.'},
+    {h:'On Hold',p:'Your call is important to us.',fx:{},t:'Nothing happens.'}],
   E:[
-    {h:'Hero of Labour',p:'Your brigade beat its quota.',fx:{gain:1},t:'Gain 1 token.'},
-    {h:'Extra Ration Coupon',p:'The district office found one more.',fx:{gain:1},t:'Gain 1 token.'},
-    {h:'Plan Fulfilled Early',p:'The factory celebrates with a bonus.',fx:{gain:1},t:'Gain 1 token.'},
-    {h:'Baltic Holiday',p:'The union sends you to the seaside.',fx:{gain:1},t:'Gain 1 token.'},
-    {h:'Party Dues',p:'Membership is voluntary. Dues are not.',fx:{pay:1},t:'Pay 1 token.'},
-    {h:'Voluntary Contribution',p:'For the reconstruction fund.',fx:{pay:1},t:'Pay 1 token.'},
-    {h:'Shoe Shortage',p:'You buy a pair on the side.',fx:{pay:1},t:'Pay 1 token.'},
-    {h:'All Equal Today',p:'Everyone stands in the same line.',fx:{},t:'Nothing happens.'},
-    {h:'On Schedule',p:'The Five-Year Plan is on track.',fx:{},t:'Nothing happens.'},
-    {h:'Front-Page News',p:'Neues Deutschland praises the harvest.',fx:{},t:'Nothing happens.'}],
+    {h:'Volunteer of the Month',p:'Your crew beat its quota.',fx:{gain:1},t:'Gain 1 token.'},
+    {h:'Extra Food Voucher',p:'The co-op office found one more.',fx:{gain:1},t:'Gain 1 token.'},
+    {h:'Project Done Early',p:'The community garden opens ahead of schedule.',fx:{gain:1},t:'Gain 1 token.'},
+    {h:'Free Summer Camp',p:'The city sends the kids to the lake.',fx:{gain:1},t:'Gain 1 token.'},
+    {h:'HOA Dues',p:'Membership is voluntary. Dues are not.',fx:{pay:1},t:'Pay 1 token.'},
+    {h:'Suggested Donation',p:'For the new community center.',fx:{pay:1},t:'Pay 1 token.'},
+    {h:'Backordered',p:'You buy it on the side instead.',fx:{pay:1},t:'Pay 1 token.'},
+    {h:'All Equal Today',p:'Everyone waits in the same line.',fx:{},t:'Nothing happens.'},
+    {h:'On Schedule',p:'The five-year city plan is on track.',fx:{},t:'Nothing happens.'},
+    {h:'Town Hall Meeting',p:'Three hours of public comment.',fx:{},t:'Nothing happens.'}],
   I:[
-    {h:'Inflation!',p:'The funny money is worth less.',fx:{infl:true},t:'Prices double until your next turn. Gold costs 20. Gains are not doubled.'},
-    {h:'Printing Presses Run',p:'More coins, same gold.',fx:{infl:true},t:'Prices double until your next turn. Gold costs 20. Gains are not doubled.'},
-    {h:'Prices Spike',p:'Bread costs twice what it did yesterday.',fx:{infl:true},t:'Prices double until your next turn. Gold costs 20. Gains are not doubled.'}]
+    {h:'Price Hike!',p:'The funny money buys less.',fx:{infl:true},t:'West Side payments double until your next turn, and gold costs 20. East Side tokens, coin grabs and gains are not doubled.'},
+    {h:'Money Printer Goes Brrr',p:'More coins, same gold.',fx:{infl:true},t:'West Side payments double until your next turn, and gold costs 20. East Side tokens, coin grabs and gains are not doubled.'},
+    {h:'Egg Prices Spike',p:'A dozen costs twice what it did yesterday.',fx:{infl:true},t:'West Side payments double until your next turn, and gold costs 20. East Side tokens, coin grabs and gains are not doubled.'}]
 };
 const COLORS = ['#c8891a','#2f7a4b','#6b4c9a','#1b2023'];
-const DECK_NAME = {W:'West card', E:'East card', I:'Inflation card'};
+const DECK_NAME = {W:'West card', E:'East card', I:'Price Hike card'};
 
 /* =================== STATE =================== */
 let S = null;            // game state (plain JSON)
@@ -343,7 +346,7 @@ class Abort extends Error {}
 function newState(names, laps, duo){
   return {
     players: names.map((n, i) => {
-      const p = {id:i, name:n, color:COLORS[i], stack:[5,2,2,1,1,1], gold:0, laps:0, pos:{path:'L', i:0}, out:false};
+      const p = {id:i, name:n, color:COLORS[i], stack:[5,2,2,1,1,1,1,1], gold:0, laps:0, pos:{path:'L', i:0}, out:false};
       // You vs. bot: two pieces per player, on opposite starts, sharing one stack. p.pos is the piece in play.
       if (duo) { p.pieces = [p.pos, {path:'L', i:20}]; p.cur = 0; p.bot = i === 1; }
       return p;
@@ -476,7 +479,7 @@ function buildBoard(){
     const corner = [0,10,20,30].includes(i);
     let cls = h + (corner ? ' corner' : '') + (s.t === 'cross' ? ' cross' : '') + (s.fork ? ' fork' : '');
     let tp = i + ' · ' + TYPE_LABEL[s.t];
-    if (s.t === 'C') tp = i + ' · ' + (s.deck === 'I' ? 'Inflation' : s.deck === 'W' ? 'West card' : 'East card');
+    if (s.t === 'C') tp = i + ' · ' + (s.deck === 'I' ? 'Price Hike' : s.deck === 'W' ? 'West card' : 'East card');
     if (s.fork) tp += ' · fork';
     add('L' + i, r, c, cls, tp, s.nm, s.n);
   });
@@ -504,8 +507,8 @@ function renderBoard(){
   $('#potInfo').textContent = S.pot.length ? `${S.pot.length} coin${S.pot.length>1?'s':''} · value ${sum(S.pot)}` : 'empty';
   for (const d of ['W','E','I']) $('#cnt' + d).textContent = S.decks[d].length + ' left';
   const inf = $('#infl');
-  if (S.inflation) { inf.className = 'infl'; inf.textContent = `Inflation: payments doubled until ${S.players[S.inflation.by].name}'s next turn`; }
-  else { inf.className = 'infl off'; inf.textContent = 'No inflation in effect'; }
+  if (S.inflation) { inf.className = 'infl'; inf.textContent = `Price Hike: West Side payments doubled until ${S.players[S.inflation.by].name}'s next turn`; }
+  else { inf.className = 'infl off'; inf.textContent = 'No Price Hike in effect'; }
 }
 
 const FACE = '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="7" r="3.7"/><path d="M3.2 17.5c.9-3.9 3.6-6 6.8-6s5.9 2.1 6.8 6z"/></svg>';
@@ -541,7 +544,7 @@ document.addEventListener('click', e => {
 async function showCard(deck, card){
   const g = gid, c3 = $('#card3d'), back = $('#cardBack'), face = $('#cardFace');
   c3.classList.add('still'); c3.classList.remove('up');
-  back.className = 'side back ' + deck; back.textContent = deck === 'I' ? 'INFLATION' : deck === 'W' ? 'WEST' : 'EAST';
+  back.className = 'side back ' + deck; back.textContent = deck === 'I' ? 'PRICE HIKE' : deck === 'W' ? 'WEST' : 'EAST';
   face.innerHTML = `<span class="kd ${deck}">${DECK_NAME[deck]}${deck !== 'I' ? ' · demo' : ''}</span><h4>${esc(card.h)}</h4><p>${esc(card.p)}</p><span class="fx">${esc(card.t)}</span>`;
   void c3.offsetWidth; await sleep(250); check(g);
   c3.classList.remove('still'); c3.classList.add('up');
@@ -555,7 +558,7 @@ async function drawCard(p, deck){
   log(`${p.name} draws a ${DECK_NAME[deck]}: ${card.h}. ${card.t}`);
   if (card.fx.gain) gain(p, card.fx.gain);
   if (card.fx.pay) await pay(p, card.fx.pay, 'bank', card.h);
-  if (card.fx.infl) { S.inflation = {by:p.id}; log(`Inflation! Payments are doubled until ${p.name}'s next turn.`, true); }
+  if (card.fx.infl) { S.inflation = {by:p.id}; log(`Price Hike! West Side payments are doubled until ${p.name}'s next turn.`, true); }
   render();
 }
 
@@ -569,19 +572,19 @@ function gain(p, amt, why){
 function cashIn(p){
   p.gold--; S.bankGold++;
   const bundle = [5,2,2,1];
-  addCoins(p, S.inflation ? bundle.concat(bundle) : bundle);
-  log(`${p.name} cashes in a gold bar for ${S.inflation ? 'two bundles' : 'a 5, two 2s and a 1'}.`, true);
+  addCoins(p, bundle);
+  log(`${p.name} cashes in a gold bar for a 5, two 2s and a 1.`, true);
 }
 function wouldEmpty(p, amt, mode){ return mode === 'W' ? sum(p.stack) <= amt : amt >= p.stack.length; }
 // to: a player object, 'pot' or 'bank'
 async function pay(p, base, to, why){
   if (p.out || base <= 0) return;
   const g = gid;
-  const amt = base * mult();
   const toP = typeof to === 'object' ? to : null;
   const mode = toP && half(toP) !== half(p) ? 'X' : half(p);
+  const amt = base * (mode === 'W' ? mult() : 1);   // Price Hikes double West Side amounts only
   while (p.gold > 0 && wouldEmpty(p, amt, mode)) cashIn(p);
-  const whoTo = toP ? toP.name : to === 'pot' ? 'the Crony Pot' : 'the bank';
+  const whoTo = toP ? toP.name : to === 'pot' ? 'the Slush Fund' : 'the bank';
   const tag = why ? ` for ${why}` : '';
   if (mode === 'X') {
     log(`${p.name} owes ${amt} to ${toP.name} across the sector line: ${toP.name} rolls for each coin.`);
@@ -605,7 +608,7 @@ async function pay(p, base, to, why){
     if (toP) addCoins(toP, fewest(paid)); else if (to === 'pot') S.pot.push(...fewest(paid));
     log(`${p.name} pays ${paid} to ${whoTo}${tag}${s > amt ? `, gets ${s - amt} change` : ''}.`);
   }
-  if (S.inflation && base !== amt) log(`(Inflation doubled that payment.)`);
+  if (S.inflation && base !== amt) log(`(The Price Hike doubled that payment.)`);
   render();
   if (!p.stack.length) knockOut(p);
 }
@@ -623,13 +626,15 @@ async function step(p){ renderBoard(); await sleep(170); }
 
 async function passStart(p){
   const g = gid;
+  const behind = active().every(o => o.laps >= p.laps) ? 1 : 0;   // catch-up: fewest laps, ties included
   p.laps++;
   const f = flagsOf(p);
-  addCoins(p, fewest(2 + f));
-  log(`${p.name} passes ${startOf(p) === 20 ? 'Pankow Villa, piece 2’s start' : 'START'}: lap ${p.laps}, collects ${2 + f}${f ? ` (2 + ${f} for flags)` : ''}.`, true);
+  addCoins(p, fewest(2 + f + behind));
+  const extra = [f ? `${f} for flags` : '', behind ? '1 catch-up for fewest laps' : ''].filter(Boolean).join(', ');
+  log(`${p.name} passes ${startOf(p) === 20 ? 'the Lake House, piece 2’s start' : 'START'}: lap ${p.laps}, collects ${2 + f + behind}${extra ? ` (2 + ${extra})` : ''}.`, true);
   if (p.laps >= S.target && !S.ending) { S.ending = true; log(`${p.name} reached ${S.target} laps! The game ends when this round finishes.`, true); }
   render();
-  const cost = 10 * mult();
+  const cost = 10 * (half(p) === 'W' ? mult() : 1);
   while (true) {
     const opts = [];
     if (p.gold < 2 && S.bankGold > 0 && sum(p.stack) > cost) opts.push({label:`Buy a gold bar for ${cost}`, v:'buy'});
@@ -646,12 +651,16 @@ async function passStart(p){
 async function crossing(p){
   const g = gid;
   const into = half(p) === 'E' ? 'the East: every coin now counts as 1' : 'the West: coins count at printed value';
-  if (p.bot) p.stack.sort((a, b) => a - b);
+  const east = half(p) === 'E', want = east ? 1 : 5;
+  if (p.bot) p.stack.sort((a, b) => east ? a - b : b - a);
   render();
-  if (p.bot) await choose(`${p.name} crossed into ${into}. It puts its smallest coins on top.`, [{label:'Continue', v:1}]);
-  else await choose(`You crossed into ${into}. Tap coins in your stack to move them to the top, then continue.`, [{label:'Done re-ordering', v:1}], {pick:true});
+  const tip = `Bonus: if your top coin is a ${want} (${east ? 'smallest on top for the East' : 'biggest on top for the West'}), collect 1.`;
+  if (p.bot) await choose(`${p.name} crossed into ${into}. It puts its ${east ? 'smallest' : 'biggest'} coins on top.`, [{label:'Continue', v:1}]);
+  else await choose(`You crossed into ${into}. Tap coins in your stack to move them to the top. ${tip}`, [{label:'Done re-ordering', v:1}], {pick:true});
   check(g);
   log(`${p.name} crosses at ${SQ[p.pos.i].n} and sets the stack order.`);
+  if (p.stack[0] === want) gain(p, 1, `crossing bonus: a ${want} on top`);
+  render();
 }
 
 async function moveLoop(p, steps){
@@ -691,11 +700,14 @@ async function landShort(p){
   log(`${p.name} lands on ${sq.n}. ${sq.d}`);
   if (side === 'W') {
     if (k === 0) { if (p.stack.length) { const [c] = p.stack.splice(0, 1); log(`A dealer takes ${p.name}'s top coin, worth ${c}.`); render(); if (!p.stack.length) { if (p.gold) { cashIn(p); render(); } else knockOut(p); } } }
-    if (k === 1) await pay(p, 2, 'bank', 'the currency reform');
-    if (k === 2) { const east = active().filter(o => o !== p && half(o) === 'E'); if (!east.length) log('Nobody is on the East half, so nothing is owed.'); for (const o of east) { if (p.out) break; await pay(p, 1, o, 'blockade shortages'); } }
+    if (k === 1) await pay(p, 1, 'bank', 'hidden fees');
+    if (k === 2) { const east = active().filter(o => o !== p && half(o) === 'E'); if (!east.length) log('Nobody is on the East Side, so nothing is owed.'); for (const o of east) { if (p.out) break; await pay(p, 1, o, 'supply chain shortages'); } }
     if (k === 3) {
       const left = nextActive(p.id);
-      if (left !== p && p.stack.length) {
+      const [r0] = await roll(1, 'Is the landlord home?'); check(g);
+      if (r0 <= 3) log(`${p.name} rolls ${r0}: the landlord is away.`);
+      else if (left !== p && p.stack.length) {
+        log(`${p.name} rolls ${r0}: the landlord is home.`);
         const [d] = await roll(1, `${left.name} rolls for a coin`); check(g);
         const idx = Math.min(d - 1, p.stack.length - 1); const [c] = p.stack.splice(idx, 1); addCoins(left, [c]);
         log(`${left.name} rolls ${d} and takes ${p.name}'s ${ord(idx)} coin, worth ${c}.`);
@@ -706,7 +718,7 @@ async function landShort(p){
     const [d] = await roll(1, `${sq.n}`); check(g);
     if (k === 0) { if (d >= 4) gain(p, 1, `rolled ${d}`); else await pay(p, 1, 'bank', `empty shelves (rolled ${d})`); }
     if (k === 1) { if (d >= 5) gain(p, 2, `rolled ${d}`); else await pay(p, 1, 'bank', `a hard shift (rolled ${d})`); }
-    if (k === 2) { if (d <= 2) { p.pos = {path:'L', i:15}; log(`${p.name} rolls ${d}: the uprising is crushed, back to Friedrichstrasse.`); } else log(`${p.name} rolls ${d} and carries on.`); }
+    if (k === 2) { if (d <= 2) { p.pos = {path:'L', i:15}; log(`${p.name} rolls ${d}: the strike fails, back to the Solar Farm.`); } else log(`${p.name} rolls ${d} and carries on.`); }
     if (k === 3) { if (d === 6) gain(p, 3, 'rolled 6'); else if (d === 1) await pay(p, 2, 'bank', 'a losing ticket (rolled 1)'); else log(`${p.name} rolls ${d}: nothing.`); }
   }
   render();
@@ -717,7 +729,7 @@ async function landLoop(p){
   if (sq.t === 'P') {
     const o = S.owners[i];
     if (o === undefined) {
-      const cost = 2 * mult();
+      const cost = 2 * (half(p) === 'W' ? mult() : 1);
       const v = await choose(`${sq.n} is free. Claim it for ${cost}${half(p) === 'E' ? ' tokens' : ''}? Anyone who lands here later pays you 1.`,
         [{label:`Claim for ${cost}`, v:true}, {label:'No thanks', v:false, alt:true}],
         {bot:() => (half(p) === 'E' ? p.stack.length : sum(p.stack)) >= cost + 4}); check(g);
@@ -730,8 +742,8 @@ async function landLoop(p){
   else if (sq.t === 'C') await drawCard(p, sq.deck);
   else if (sq.t === 'X') await pay(p, sq.amt, 'pot', sq.n);
   else if (sq.t === 'pot') {
-    if (S.pot.length) { const coins = S.pot.splice(0); addCoins(p, coins); log(`${p.name} takes the whole Crony Pot: ${coins.length} coins worth ${sum(coins)}.`, true); }
-    else log(`${p.name} visits the Party Villa, but the Crony Pot is empty.`);
+    if (S.pot.length) { const coins = S.pot.splice(0); addCoins(p, coins); log(`${p.name} takes the whole Slush Fund: ${coins.length} coins worth ${sum(coins)}.`, true); }
+    else log(`${p.name} visits the Lake House, but the Slush Fund is empty.`);
   }
   else if (sq.t === 'T') {
     const o = S.flags[i];
@@ -749,9 +761,15 @@ async function landLoop(p){
     }
   }
   else if (sq.t === 'B') {
-    if (sq.fx === 'back') { p.pos.i -= 3; log(`${p.name} is sent back 3 squares to ${SQ[p.pos.i].n}.`); }
+    if (sq.fx === 'back') {
+      const v = await choose(`${sq.n}: move back 3 squares, or pay 1${half(p) === 'E' ? ' token' : ''} to stay?`,
+        [{label:'Pay 1 to stay', v:'pay'}, {label:'Move back 3', v:'back', alt:true}], {bot:() => p.stack.length >= 5 ? 'pay' : 'back'}); check(g);
+      if (v === 'pay') await pay(p, 1, 'bank', `staying at ${sq.n}`);
+      else { p.pos.i -= 3; log(`${p.name} moves back 3 squares to ${SQ[p.pos.i].n}.`); }
+    }
     else {
-      const others = active().filter(o => o !== p);
+      const others = active().filter(o => o !== p && o.pos.path === 'L');   // players on a shortcut can't be bumped
+      if (!others.length) log(`${sq.n}: nobody on the loop to send back.`);
       if (others.length) {
         const id = await choose(`${sq.n}: send another player back 3 squares${S.duo ? ' (the piece they moved last)' : ''}.`, others.map(o => ({label:o.name, v:o.id}))); check(g);
         const t = S.players[id];
@@ -768,16 +786,16 @@ async function landLoop(p){
     if (sq.fx === 'pay1') await pay(p, 1, 'bank', sq.n);
     if (sq.fx === 'care') {
       const east = active().filter(o => o !== p && half(o) === 'E');
-      const v = await choose(`CARE package: take 1 coin from the bank, or give it to a player on the East half and draw a West card.`,
+      const v = await choose(`Free samples: take 1 coin from the bank, or give it to a player on the East Side and draw a West card.`,
         [{label:'Keep the coin', v:-1}, ...east.map(o => ({label:`Give it to ${o.name}`, v:o.id, alt:true}))]); check(g);
-      if (v === -1) gain(p, 1, 'CARE package');
-      else { addCoins(S.players[v], [1]); log(`${p.name} gives the CARE coin to ${S.players[v].name} in the East.`); render(); await drawCard(p, 'W'); }
+      if (v === -1) gain(p, 1, 'free samples');
+      else { addCoins(S.players[v], [1]); log(`${p.name} gives the free-sample coin to ${S.players[v].name} on the East Side.`); render(); await drawCard(p, 'W'); }
     }
     if (sq.fx === 'parcel') {
-      const v = await choose(`A parcel from the West: 1 coin. Keep it, or report it (it goes into the Crony Pot) and draw an East card?`,
+      const v = await choose(`A mystery package: 1 coin. Keep it, or report it (it goes into the Slush Fund) and draw an East card?`,
         [{label:'Keep it', v:'keep'}, {label:'Report it', v:'report', alt:true}]); check(g);
-      if (v === 'keep') gain(p, 1, 'Western parcel');
-      else { S.pot.push(1); log(`${p.name} reports the parcel; its coin goes into the Crony Pot.`); render(); await drawCard(p, 'E'); }
+      if (v === 'keep') gain(p, 1, 'a mystery package');
+      else { S.pot.push(1); log(`${p.name} reports the package; its coin goes into the Slush Fund.`); render(); await drawCard(p, 'E'); }
     }
   }
   render();
@@ -811,7 +829,7 @@ function snap(){ saved = JSON.parse(JSON.stringify(S)); }
 
 async function playTurn(){
   const g = gid, p = cur();
-  if (S.inflation && S.inflation.by === p.id) { S.inflation = null; log(`Inflation ends as ${p.name}'s turn begins.`); }
+  if (S.inflation && S.inflation.by === p.id) { S.inflation = null; log(`The Price Hike ends as ${p.name}'s turn begins.`); }
   snap();
   render();
   if (S.duo) await duoMove(p);
@@ -893,8 +911,8 @@ function startGame(state){
   $('#cardBack').className = 'side back none'; $('#cardBack').textContent = 'Cards flip here';
   $('#dice').innerHTML = dieHTML(1) + dieHTML(1); $('#diceCap').textContent = '';
   if (!state) log(S.duo
-    ? `New game: ${names[0]} against ${names[1]}. Each side has two pieces, one on Zoo Station and one on Pankow Villa, sharing 6 coins (value 12). First to ${S.target} laps.`
-    : `New game: ${names.join(', ')}. Everyone starts at START with 6 coins (value 12). First to ${S.target} laps.`, true);
+    ? `New game: ${names[0]} against ${names[1]}. Each side has two pieces, one on Union Station and one on the Lake House, sharing 8 coins (value 14). First to ${S.target} laps.`
+    : `New game: ${names.join(', ')}. Everyone starts at START with 8 coins (value 14). First to ${S.target} laps.`, true);
   render();
   loop();
 }
@@ -910,8 +928,9 @@ $('#nPlayers').addEventListener('change', updateForm);
 $('#mode').addEventListener('change', updateForm);
 updateForm();
 
-window.claude?.hot?.snapshot?.(() => saved ? {state:saved} : {});
-const boot = data => startGame(data && data.state && !data.state.over ? data.state : null);
+const BUILD = 'quasi-2026-11-19';   // a saved game from an older build is not restored
+window.claude?.hot?.snapshot?.(() => saved ? {state:saved, build:BUILD} : {});
+const boot = data => startGame(data && data.build === BUILD && data.state && !data.state.over ? data.state : null);
 window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
 </script>
 </body>
